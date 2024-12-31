@@ -18,8 +18,10 @@ fn CALLER_2() -> ContractAddress {
 fn deploy_game_register() -> IGameRegisterDispatcher {
 
     let game_clash_hash = declare("Game").unwrap().contract_class().class_hash;
+    let bet_clash_hash = declare("Bet").unwrap().contract_class().class_hash;
     let mut call_data = ArrayTrait::<felt252>::new();
     game_clash_hash.serialize(ref call_data);
+    bet_clash_hash.serialize(ref call_data);
 
     let contract = declare("GameRegister").unwrap().contract_class();
     let (contract_address, _) = contract.deploy(@call_data).unwrap();

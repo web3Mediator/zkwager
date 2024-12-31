@@ -1,5 +1,3 @@
-/// Interface representing `HelloContract`.
-/// This interface allows modification and retrieval of the contract balance.
 #[starknet::interface]
 pub trait IGameRegister<TContractState> {
     fn register_game(ref self: TContractState, name:felt252) -> starknet::ContractAddress;
@@ -7,7 +5,7 @@ pub trait IGameRegister<TContractState> {
     fn get_games_by_owner(self: @TContractState, owner:starknet::ContractAddress) -> Array<starknet::ContractAddress>;
 }
 
-/// Simple contract for managing balance.
+
 #[starknet::contract]
 pub mod GameRegister {
 
@@ -25,14 +23,15 @@ pub mod GameRegister {
         games: Vec<ContractAddress>, // games
         games_by_owner: Map<ContractAddress, Vec<ContractAddress>>, // owner -> games
         game_class_hash: ClassHash,
+        bet_clash_hash: ClassHash,
         salt_counter: u256,
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, game_class_hash:ClassHash) {
+    fn constructor(ref self: ContractState, game_class_hash:ClassHash, bet_clash_hash:ClassHash) {
         self.game_class_hash.write(game_class_hash);
+        self.bet_clash_hash.write(bet_clash_hash);
         self.salt_counter.write(0);
-        
     }
 
     #[abi(embed_v0)]
@@ -43,6 +42,8 @@ pub mod GameRegister {
             let game_owner = get_caller_address();
             
             let mut call_data = ArrayTrait::<felt252>::new();
+            self.bet_clash_hash.read().serialize(ref call_data);
+            call_data.append(name);
 
             let (game_contract_address, _) = syscalls::deploy_syscall(game_class_hash, salt.try_into().unwrap(), call_data.span(), false).unwrap_syscall();
             
