@@ -47,9 +47,9 @@ pub mod Game {
             let salt = self.salt_counter.read();
             
             let mut call_data = ArrayTrait::<felt252>::new();
-            // players.serialize(ref call_data);
-            // token_address.serialize(ref call_data);
-            // amount_per_player.serialize(ref call_data);
+            players.serialize(ref call_data);
+            token_address.serialize(ref call_data);
+            amount_per_player.serialize(ref call_data);
 
             let (bet_contract_address, _) = syscalls::deploy_syscall(game_class_hash, salt.try_into().unwrap(), call_data.span(), false).unwrap_syscall();
             
