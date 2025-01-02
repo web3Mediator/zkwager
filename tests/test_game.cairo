@@ -1,6 +1,3 @@
-use starknet::{ContractAddress, get_caller_address, contract_address_const};
-// use starknet::class_hash::{ClassHash, };
-
 use snforge_std::{declare, ContractClassTrait, DeclareResultTrait, start_cheat_caller_address, stop_cheat_caller_address};
 
 use zkwager::GameRegister::IGameRegisterDispatcher;
@@ -8,22 +5,7 @@ use zkwager::GameRegister::IGameRegisterDispatcherTrait;
 use zkwager::Game::IGameDispatcher;
 use zkwager::Game::IGameDispatcherTrait;
 
-fn CALLER_1() -> ContractAddress {
-    contract_address_const::<0x123>()
-}
-
-fn CALLER_2() -> ContractAddress {
-    contract_address_const::<0x456>()
-}
-
-fn CALLER_3() -> ContractAddress {
-    contract_address_const::<0x789>()
-}
-
-fn STRK_TOKEN_CONTRACT() -> ContractAddress {
-    contract_address_const::<0xabc>()
-}
-
+use zkwager::constants::{CALLER_1, CALLER_2, STRK_TOKEN_CONTRACT};
 
 fn deploy_game() -> IGameDispatcher {
 

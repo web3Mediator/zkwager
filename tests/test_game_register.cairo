@@ -6,14 +6,7 @@ use snforge_std::{declare, ContractClassTrait, DeclareResultTrait, start_cheat_c
 use zkwager::GameRegister::IGameRegisterDispatcher;
 use zkwager::GameRegister::IGameRegisterDispatcherTrait;
 
-fn CALLER_1() -> ContractAddress {
-    contract_address_const::<0x123>()
-}
-
-fn CALLER_2() -> ContractAddress {
-    contract_address_const::<0x456>()
-}
-
+use zkwager::constants::{CALLER_1, CALLER_2};
 
 fn deploy_game_register() -> IGameRegisterDispatcher {
 

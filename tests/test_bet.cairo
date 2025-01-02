@@ -10,22 +10,7 @@ use zkwager::Game::IGameDispatcherTrait;
 use zkwager::Bet::IBetDispatcher;
 use zkwager::Bet::IBetDispatcherTrait;
 
-fn CALLER_1() -> ContractAddress {
-    contract_address_const::<0x123>()
-}
-
-fn CALLER_2() -> ContractAddress {
-    contract_address_const::<0x456>()
-}
-
-fn CALLER_3() -> ContractAddress {
-    contract_address_const::<0x789>()
-}
-
-fn STRK_TOKEN_CONTRACT() -> ContractAddress {
-    contract_address_const::<0xabc>()
-}
-
+use zkwager::constants::{CALLER_1, CALLER_2, CALLER_3, STRK_TOKEN_CONTRACT};
 
 fn deploy_bet() -> IBetDispatcher {
 
