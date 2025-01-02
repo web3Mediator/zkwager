@@ -11,8 +11,17 @@ use zkwager::Bet::IBetDispatcher;
 use zkwager::Bet::IBetDispatcherTrait;
 
 use zkwager::constants::{CALLER_1, CALLER_2, CALLER_3, STRK_TOKEN_CONTRACT};
+use zkwager::types::{BetData};
 
-fn deploy_bet() -> IBetDispatcher {
+fn DEFAULT_BET_PARAMS () -> BetData {
+    BetData {
+        players: array![CALLER_1(), CALLER_2(), CALLER_3()],
+        token_contract: STRK_TOKEN_CONTRACT(),
+        amount: 100,
+    }
+}
+
+fn deploy_bet(bet_params:BetData) -> IBetDispatcher {
 
     let game_clash_hash = declare("Game").unwrap().contract_class().class_hash;
     let bet_clash_hash = declare("Bet").unwrap().contract_class().class_hash;
@@ -27,7 +36,8 @@ fn deploy_bet() -> IBetDispatcher {
     let game_address = game_register_dispatcher.register_game('test_game');
     let game_dispatcher = IGameDispatcher { contract_address: game_address };
 
-    let bet_address = game_dispatcher.create_bet(array![CALLER_1(), CALLER_2(), CALLER_3()], STRK_TOKEN_CONTRACT(), 100);
+    let bet_address = game_dispatcher.create_bet(bet_params.players, bet_params.token_contract, bet_params.amount);
+       
     let bet_dispatcher = IBetDispatcher { contract_address: bet_address };
 
     bet_dispatcher
@@ -35,11 +45,13 @@ fn deploy_bet() -> IBetDispatcher {
 
 #[test]
 fn test_deploy() {
-    let dispatcher = deploy_bet();
-    dispatcher.get_bet_data();
-    // let bets = dispatcher.g;
+    let bet_params = DEFAULT_BET_PARAMS();
+    let dispatcher = deploy_bet(bet_params);
+    let bet_data = dispatcher.get_bet_data();
 
-    // assert_eq!(bets.len(), 0, "Bets should be empty right after deployment");
+    assert_eq!(bet_data.players.len(), DEFAULT_BET_PARAMS().players.len(), "Players should be the same");
+    assert_eq!(bet_data.token_contract, DEFAULT_BET_PARAMS().token_contract, "Token contract should be the same");
+    assert_eq!(bet_data.amount, DEFAULT_BET_PARAMS().amount, "Amount should be the same");
 }
 
 // #[test]

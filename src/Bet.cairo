@@ -5,7 +5,7 @@ pub trait IBet<TContractState> {
     fn receive_amount(ref self: TContractState); // transfer from the caller address to the contract
     fn close_bet(ref self: TContractState); // close the bet to new players/receive amount
     fn finish_bet(ref self: TContractState); // finish the bet and distribute the amount
-    fn get_bet_data(self: @TContractState) -> (Array::<starknet::ContractAddress>, u256, starknet::ContractAddress, bool, bool); // finish the bet and distribute the amount
+    fn get_bet_data(self: @TContractState) -> zkwager::types::BetData; 
 }
 
 /// Simple contract for managing balance.
@@ -18,6 +18,7 @@ pub mod Bet {
         StoragePathEntry, Map,
         Vec, VecTrait, MutableVecTrait,
     };
+    use zkwager::types::{BetData};
 
     #[storage]
     struct Storage {
@@ -60,7 +61,7 @@ pub mod Bet {
             self.finished.write(true);
         }
 
-        fn get_bet_data(self: @ContractState) -> (Array::<ContractAddress>, u256, ContractAddress, bool, bool) {
+        fn get_bet_data(self: @ContractState) -> BetData {
             let mut players = ArrayTrait::<ContractAddress>::new();            
             for i in 0..self.players.len() {
                 let player_address = self.players.at(i).read();
@@ -70,7 +71,11 @@ pub mod Bet {
             let token_address = self.token_address.read();
             let closed = self.closed.read();
             let finished = self.finished.read();
-            (players, amount_per_player, token_address, closed, finished)
+            BetData {
+                players: players,
+                token_contract: token_address,
+                amount: amount_per_player,
+            }
         }
         
     }
