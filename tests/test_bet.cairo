@@ -1,7 +1,7 @@
 use starknet::{ContractAddress, get_caller_address, contract_address_const};
 // use starknet::class_hash::{ClassHash, };
 
-use snforge_std::{declare, ContractClassTrait, DeclareResultTrait, start_cheat_caller_address, stop_cheat_caller_address};
+use snforge_std::{declare, ContractClassTrait, DeclareResultTrait, start_cheat_caller_address, stop_cheat_caller_address, start_cheat_caller_address_global, stop_cheat_caller_address_global};
 
 use zkwager::GameRegister::IGameRegisterDispatcher;
 use zkwager::GameRegister::IGameRegisterDispatcherTrait;
@@ -12,6 +12,8 @@ use zkwager::Bet::IBetDispatcherTrait;
 
 use zkwager::constants::{CALLER_1, CALLER_2, CALLER_3, STRK_TOKEN_CONTRACT};
 use zkwager::types::{BetData};
+
+use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 
 fn DEFAULT_BET_PARAMS () -> BetData {
     BetData {
@@ -54,24 +56,24 @@ fn test_deploy() {
     assert_eq!(bet_data.amount, DEFAULT_BET_PARAMS().amount, "Amount should be the same");
 }
 
-// #[test]
-// fn test_create_bet() {
-//     let dispatcher = deploy_game();
+#[test]
+#[fork(url: "https://starknet-sepolia.public.blastapi.io/rpc/v0_7", block_number:428086)]
+fn test_receive_amount() {
+    let dispatcher = deploy_bet(DEFAULT_BET_PARAMS());
+    let token_dispatcher = IERC20Dispatcher { contract_address: STRK_TOKEN_CONTRACT() };
 
-//     start_cheat_caller_address(dispatcher.contract_address, CALLER_1());
-//     let bet_address = dispatcher.create_bet(array![CALLER_1(), CALLER_2()], STRK_TOKEN_CONTRACT(), 100);
-//     let bets = dispatcher.get_bets();
-//     let bets_by_player_1 = dispatcher.get_bets_by_player(CALLER_1());
-//     let bets_by_player_2 = dispatcher.get_bets_by_player(CALLER_2());
-//     stop_cheat_caller_address(dispatcher.contract_address);
+    fund_contract_for_gas(dispatcher.contract_address);
 
-//     assert_eq!(bets.len(), 1, "Bets should contain one bet after creation");
-//     assert_eq!(*bets.at(0), bet_address, "The created bet should be in the bets list");
+    start_cheat_caller_address_global(CALLER_1());
+    token_dispatcher.approve(dispatcher.contract_address, 100);
+    // dispatcher.receive_amount();
+    stop_cheat_caller_address_global();
+}
 
-//     assert_eq!(bets_by_player_1.len(), 1, "Bets by player 1 should contain one bet after creation");
-//     assert_eq!(*bets_by_player_1.at(0), bet_address, "The created bet should be in the bets by player 1 list");
-
-//     assert_eq!(bets_by_player_2.len(), 1, "Bets by player 2 should contain one bet after creation");
-//     assert_eq!(*bets_by_player_2.at(0), bet_address, "The created bet should be in the bets by player 2 list");
-// }
-
+fn fund_contract_for_gas(contract_address:ContractAddress) {
+    let token_dispatcher = IERC20Dispatcher { contract_address: STRK_TOKEN_CONTRACT() };
+    start_cheat_caller_address(token_dispatcher.contract_address, CALLER_2());
+    // adding a bit of tokens to the contract to pay for the gas
+    token_dispatcher.transfer(contract_address, 10000);
+    stop_cheat_caller_address(token_dispatcher.contract_address);
+}

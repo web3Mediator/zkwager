@@ -11,7 +11,7 @@ pub trait IBet<TContractState> {
 /// Simple contract for managing balance.
 #[starknet::contract]
 pub mod Bet {
-    use starknet::{ContractAddress, get_caller_address, contract_address_const, syscalls, SyscallResultTrait};
+    use starknet::{ContractAddress, get_caller_address, get_contract_address, contract_address_const, syscalls, SyscallResultTrait};
     use starknet::class_hash::ClassHash;
     use starknet::storage::{
         StoragePointerReadAccess, StoragePointerWriteAccess,
@@ -19,6 +19,8 @@ pub mod Bet {
         Vec, VecTrait, MutableVecTrait,
     };
     use zkwager::types::{BetData};
+
+    use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 
     #[storage]
     struct Storage {
@@ -50,6 +52,13 @@ pub mod Bet {
         fn receive_amount(ref self: ContractState) {
             assert!(!self.closed.read(), "The bet should be open to receive amounts");
             // transfer from the caller address to the contract
+            let token_address = self.token_address.read();
+            let amount_per_player = self.amount_per_player.read();
+            let caller_address = get_caller_address();
+            let contract_address = get_contract_address();
+            let dispatcher = IERC20Dispatcher { contract_address:token_address };
+
+            let transfer_result = dispatcher.transfer_from(caller_address, contract_address, amount_per_player);
         }
 
         fn close_bet(ref self: ContractState) {
