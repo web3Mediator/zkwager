@@ -28,10 +28,7 @@ fn deploy_game() -> IGameDispatcher {
 #[test]
 fn test_deploy() {
     let dispatcher = deploy_game();
-    let owner = dispatcher.get_owner();
     let bets = dispatcher.get_bets();
-
-    assert_eq!(owner, OWNER(), "Owner should be the same as the one used for deployment");
     assert_eq!(bets.len(), 0, "Bets should be empty right after deployment");
 }
 

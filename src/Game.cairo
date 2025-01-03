@@ -10,8 +10,6 @@ pub trait IGame<TContractState> {
     ) -> starknet::ContractAddress;
     fn get_bets(self: @TContractState) -> Array::<starknet::ContractAddress>;
     fn get_bets_by_player(self: @TContractState, player:starknet::ContractAddress) -> Array::<starknet::ContractAddress>;
-    //
-    fn get_owner(self: @TContractState) -> starknet::ContractAddress;
 }
 
 /// Simple contract for managing balance.
@@ -102,10 +100,5 @@ pub mod Game {
 
             bets
         }
-
-        fn get_owner(self: @ContractState) -> starknet::ContractAddress {
-            self.ownable.owner()
-        }
-
     }
 }

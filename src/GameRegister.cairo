@@ -3,6 +3,8 @@ pub trait IGameRegister<TContractState> {
     fn register_game(ref self: TContractState, name:felt252) -> starknet::ContractAddress;
     fn get_games(self: @TContractState) -> Array<starknet::ContractAddress>;
     fn get_games_by_owner(self: @TContractState, owner:starknet::ContractAddress) -> Array<starknet::ContractAddress>;
+    //
+    fn get_owner(self: @TContractState) -> starknet::ContractAddress;
 }
 
 
@@ -17,6 +19,20 @@ pub mod GameRegister {
     use starknet::{get_caller_address, ContractAddress, syscalls, SyscallResultTrait };
     use starknet::class_hash::ClassHash;
 
+    use openzeppelin::access::ownable::OwnableComponent;
+
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+    // Ownable Mixin
+    #[abi(embed_v0)]
+    impl OwnableMixinImpl = OwnableComponent::OwnableMixinImpl<ContractState>;
+    impl InternalImpl = OwnableComponent::InternalImpl<ContractState>;
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        #[flat]
+        OwnableEvent: OwnableComponent::Event
+    }
 
     #[storage]
     struct Storage {
@@ -25,6 +41,8 @@ pub mod GameRegister {
         game_class_hash: ClassHash,
         bet_clash_hash: ClassHash,
         salt_counter: u256,
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage
     }
 
     #[constructor]
@@ -32,6 +50,7 @@ pub mod GameRegister {
         self.game_class_hash.write(game_class_hash);
         self.bet_clash_hash.write(bet_clash_hash);
         self.salt_counter.write(0);
+        self.ownable.initializer(get_caller_address());
     }
 
     #[abi(embed_v0)]
@@ -74,6 +93,11 @@ pub mod GameRegister {
             };
 
             games
+        }
+
+        /////
+        fn get_owner(self: @ContractState) -> starknet::ContractAddress {
+            self.ownable.owner()
         }
     }
 }

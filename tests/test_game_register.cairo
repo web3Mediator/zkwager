@@ -1,15 +1,15 @@
 use starknet::{ContractAddress, get_caller_address, contract_address_const};
 // use starknet::class_hash::{ClassHash, };
 
-use snforge_std::{declare, ContractClassTrait, DeclareResultTrait, start_cheat_caller_address, stop_cheat_caller_address};
+use snforge_std::{declare, ContractClassTrait, DeclareResultTrait, start_cheat_caller_address, stop_cheat_caller_address, start_cheat_caller_address_global, stop_cheat_caller_address_global};
 
 use zkwager::GameRegister::IGameRegisterDispatcher;
 use zkwager::GameRegister::IGameRegisterDispatcherTrait;
 
-use zkwager::constants::{CALLER_1, CALLER_2};
+use zkwager::constants::{CALLER_1, CALLER_2, OWNER};
 
 fn deploy_game_register() -> IGameRegisterDispatcher {
-
+    start_cheat_caller_address_global(OWNER());
     let game_clash_hash = declare("Game").unwrap().contract_class().class_hash;
     let bet_clash_hash = declare("Bet").unwrap().contract_class().class_hash;
     let mut call_data = ArrayTrait::<felt252>::new();
@@ -26,7 +26,9 @@ fn deploy_game_register() -> IGameRegisterDispatcher {
 fn test_deploy() {
     let dispatcher = deploy_game_register();
     let games = dispatcher.get_games();
+    let owner = dispatcher.get_owner();
 
+    assert_eq!(owner, OWNER(), "Owner should be the same as the one used for deployment");
     assert_eq!(games.len(), 0, "Games should be empty right after deployment");
 }
 
