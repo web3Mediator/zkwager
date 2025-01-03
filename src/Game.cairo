@@ -10,6 +10,8 @@ pub trait IGame<TContractState> {
     ) -> starknet::ContractAddress;
     fn get_bets(self: @TContractState) -> Array::<starknet::ContractAddress>;
     fn get_bets_by_player(self: @TContractState, player:starknet::ContractAddress) -> Array::<starknet::ContractAddress>;
+    //
+    fn get_owner(self: @TContractState) -> starknet::ContractAddress;
 }
 
 /// Simple contract for managing balance.
@@ -22,22 +24,37 @@ pub mod Game {
         StoragePathEntry, Map,
         Vec, VecTrait, MutableVecTrait,
     };
+    use openzeppelin::access::ownable::OwnableComponent;
+
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+    // Ownable Mixin
+    #[abi(embed_v0)]
+    impl OwnableMixinImpl = OwnableComponent::OwnableMixinImpl<ContractState>;
+    impl InternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
         bet_class_hash: ClassHash,
         name: felt252, // name of the game
-        owner: ContractAddress, // the one who deployed the contract
         bets: Vec<ContractAddress>, // bets
         bets_by_player: Map<ContractAddress, Vec<ContractAddress>>, // player -> bets
         salt_counter:u256,
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        #[flat]
+        OwnableEvent: OwnableComponent::Event
     }
 
     #[constructor]
     fn constructor(ref self: ContractState, bet_class_hash:ClassHash, name:felt252) {
         self.bet_class_hash.write(bet_class_hash);
         self.name.write(name);
-        self.owner.write(get_caller_address());
+        self.ownable.initializer(get_caller_address());
     }
 
     #[abi(embed_v0)]
@@ -84,6 +101,10 @@ pub mod Game {
             };
 
             bets
+        }
+
+        fn get_owner(self: @ContractState) -> starknet::ContractAddress {
+            self.ownable.owner()
         }
 
     }

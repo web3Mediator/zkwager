@@ -1,14 +1,14 @@
-use snforge_std::{declare, ContractClassTrait, DeclareResultTrait, start_cheat_caller_address, stop_cheat_caller_address};
+use snforge_std::{declare, ContractClassTrait, DeclareResultTrait, start_cheat_caller_address, stop_cheat_caller_address, start_cheat_caller_address_global};
 
 use zkwager::GameRegister::IGameRegisterDispatcher;
 use zkwager::GameRegister::IGameRegisterDispatcherTrait;
 use zkwager::Game::IGameDispatcher;
 use zkwager::Game::IGameDispatcherTrait;
 
-use zkwager::constants::{CALLER_1, CALLER_2, STRK_TOKEN_CONTRACT};
+use zkwager::constants::{OWNER, CALLER_1, CALLER_2, STRK_TOKEN_CONTRACT};
 
 fn deploy_game() -> IGameDispatcher {
-
+    start_cheat_caller_address_global(OWNER());
     let game_clash_hash = declare("Game").unwrap().contract_class().class_hash;
     let bet_clash_hash = declare("Bet").unwrap().contract_class().class_hash;
     let mut call_data = ArrayTrait::<felt252>::new();
@@ -28,8 +28,10 @@ fn deploy_game() -> IGameDispatcher {
 #[test]
 fn test_deploy() {
     let dispatcher = deploy_game();
+    let owner = dispatcher.get_owner();
     let bets = dispatcher.get_bets();
 
+    assert_eq!(owner, OWNER(), "Owner should be the same as the one used for deployment");
     assert_eq!(bets.len(), 0, "Bets should be empty right after deployment");
 }
 
