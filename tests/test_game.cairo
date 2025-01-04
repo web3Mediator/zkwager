@@ -9,18 +9,15 @@ use zkwager::constants::{OWNER, CALLER_1, CALLER_2, STRK_TOKEN_CONTRACT};
 
 fn deploy_game() -> IGameDispatcher {
     start_cheat_caller_address_global(OWNER());
-    let game_clash_hash = declare("Game").unwrap().contract_class().class_hash;
-    let bet_clash_hash = declare("Bet").unwrap().contract_class().class_hash;
+    let game_contract = declare("Game").unwrap().contract_class();
     let mut call_data = ArrayTrait::<felt252>::new();
-    game_clash_hash.serialize(ref call_data);
+    let bet_clash_hash = declare("Bet").unwrap().contract_class().class_hash;
+    let name = 'test_game';
     bet_clash_hash.serialize(ref call_data);
+    call_data.append(name);
+    let (contract_address, _) = game_contract.deploy(@call_data).unwrap();
 
-    let contract = declare("GameRegister").unwrap().contract_class();
-    let (contract_address, _) = contract.deploy(@call_data).unwrap();
-    let game_register_dispatcher = IGameRegisterDispatcher { contract_address };
-
-    let game_address = game_register_dispatcher.register_game('test_game');
-    let game_dispatcher = IGameDispatcher { contract_address: game_address };
+    let game_dispatcher = IGameDispatcher { contract_address: contract_address };
 
     game_dispatcher
 }

@@ -24,23 +24,17 @@ fn DEFAULT_BET_PARAMS () -> BetData {
 }
 
 fn deploy_bet(bet_params:BetData) -> IBetDispatcher {
-
-    let game_clash_hash = declare("Game").unwrap().contract_class().class_hash;
-    let bet_clash_hash = declare("Bet").unwrap().contract_class().class_hash;
+    let bet_contract = declare("Bet").unwrap().contract_class();
+    
     let mut call_data = ArrayTrait::<felt252>::new();
-    game_clash_hash.serialize(ref call_data);
-    bet_clash_hash.serialize(ref call_data);
 
-    let contract = declare("GameRegister").unwrap().contract_class();
-    let (contract_address, _) = contract.deploy(@call_data).unwrap();
-    let game_register_dispatcher = IGameRegisterDispatcher { contract_address };
+    bet_params.players.serialize(ref call_data);
+    bet_params.token_contract.serialize(ref call_data);
+    bet_params.amount.serialize(ref call_data);
 
-    let game_address = game_register_dispatcher.register_game('test_game');
-    let game_dispatcher = IGameDispatcher { contract_address: game_address };
+    let (contract_address, _) = bet_contract.deploy(@call_data).unwrap();
 
-    let bet_address = game_dispatcher.create_bet(bet_params.players, bet_params.token_contract, bet_params.amount);
-       
-    let bet_dispatcher = IBetDispatcher { contract_address: bet_address };
+    let bet_dispatcher = IBetDispatcher { contract_address: contract_address };
 
     bet_dispatcher
 }
