@@ -22,9 +22,12 @@ pub mod Bet {
 
     use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 
+    
+
     #[storage]
     struct Storage {
-        players: Vec<ContractAddress>,
+        players: Vec<ContractAddress>, 
+        paid_players: Vec<ContractAddress>,
         amount_per_player: u256,
         token_address: ContractAddress,
         closed: bool,
@@ -58,7 +61,9 @@ pub mod Bet {
             let contract_address = get_contract_address();
             let dispatcher = IERC20Dispatcher { contract_address:token_address };
 
-            let transfer_result = dispatcher.transfer_from(caller_address, contract_address, amount_per_player);
+            dispatcher.transfer_from(caller_address, contract_address, amount_per_player);
+
+            self.paid_players.append().write(caller_address);
         }
 
         fn close_bet(ref self: ContractState) {
