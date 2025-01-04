@@ -6,6 +6,7 @@ pub trait IBet<TContractState> {
     fn close_bet(ref self: TContractState); // close the bet to new players/receive amount
     fn finish_bet(ref self: TContractState); // finish the bet and distribute the amount
     fn get_bet_data(self: @TContractState) -> zkwager::types::BetData; 
+    fn set_winner(ref self: TContractState, winner: starknet::ContractAddress);
 }
 
 /// Simple contract for managing balance.
@@ -29,6 +30,7 @@ pub mod Bet {
         players: Vec<ContractAddress>, 
         paid_players: Vec<ContractAddress>,
         amount_per_player: u256,
+        winner: ContractAddress,
         token_address: ContractAddress,
         closed: bool,
         finished: bool,
@@ -90,6 +92,11 @@ pub mod Bet {
                 token_contract: token_address,
                 amount: amount_per_player,
             }
+        }
+
+        fn set_winner(ref self: ContractState, winner: ContractAddress) {
+            self.winner.write(winner);
+            self.finished.write(true);
         }
         
     }
