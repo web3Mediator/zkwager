@@ -15,10 +15,11 @@ fn deploy_game_register() -> IGameRegisterDispatcher {
     let mut call_data = ArrayTrait::<felt252>::new();
     game_clash_hash.serialize(ref call_data);
     bet_clash_hash.serialize(ref call_data);
-
+    
     let contract = declare("GameRegister").unwrap().contract_class();
     let (contract_address, _) = contract.deploy(@call_data).unwrap();
     let dispatcher = IGameRegisterDispatcher { contract_address };
+    stop_cheat_caller_address_global();
     dispatcher
 }
 

@@ -63,6 +63,7 @@ pub mod GameRegister {
             let mut call_data = ArrayTrait::<felt252>::new();
             self.bet_clash_hash.read().serialize(ref call_data);
             call_data.append(name);
+            call_data.append(game_owner.into());
 
             let (game_contract_address, _) = syscalls::deploy_syscall(game_class_hash, salt.try_into().unwrap(), call_data.span(), false).unwrap_syscall();
             

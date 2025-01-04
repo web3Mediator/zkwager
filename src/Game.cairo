@@ -10,6 +10,8 @@ pub trait IGame<TContractState> {
     ) -> starknet::ContractAddress;
     fn get_bets(self: @TContractState) -> Array::<starknet::ContractAddress>;
     fn get_bets_by_player(self: @TContractState, player:starknet::ContractAddress) -> Array::<starknet::ContractAddress>;
+    //
+    fn get_owner(self: @TContractState) -> starknet::ContractAddress;
 }
 
 /// Simple contract for managing balance.
@@ -49,10 +51,10 @@ pub mod Game {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, bet_class_hash:ClassHash, name:felt252) {
+    fn constructor(ref self: ContractState, bet_class_hash:ClassHash, name:felt252, owner:ContractAddress) {
         self.bet_class_hash.write(bet_class_hash);
         self.name.write(name);
-        self.ownable.initializer(get_caller_address());
+        self.ownable.initializer(owner); // is not the caller because this one will be called from the GameRegister contract, so the owner is the caller of the GameRegister contract 
     }
 
     #[abi(embed_v0)]
@@ -99,6 +101,11 @@ pub mod Game {
             };
 
             bets
+        }
+
+        /////
+        fn get_owner(self: @ContractState) -> starknet::ContractAddress {
+            self.ownable.owner()
         }
     }
 }
