@@ -10,7 +10,7 @@ use zkwager::Game::IGameDispatcherTrait;
 use zkwager::Bet::IBetDispatcher;
 use zkwager::Bet::IBetDispatcherTrait;
 
-use zkwager::constants::{CALLER_1, CALLER_2, CALLER_3, STRK_TOKEN_CONTRACT};
+use zkwager::constants::{CALLER_1, CALLER_2, CALLER_3, STRK_TOKEN_CONTRACT, OWNER};
 use zkwager::types::{BetData};
 
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
@@ -59,15 +59,52 @@ fn test_receive_amount() {
     fund_contract_for_gas(dispatcher.contract_address);
 
     start_cheat_caller_address_global(CALLER_1());
-    token_dispatcher.approve(dispatcher.contract_address, 100);
-    // dispatcher.receive_amount();
+    token_dispatcher.approve(CALLER_1(), 100); // this approve could be premade like a balance for the game
+    // VERY IMPORTANT TO DO -> assert that the one who called receive_amount is the same as the one who approved
+    // or -> this function should of the game contract instead of the bet 
+    dispatcher.receive_amount();
     stop_cheat_caller_address_global();
+}
+
+#[test]
+#[fork(url: "https://starknet-sepolia.public.blastapi.io/rpc/v0_7", block_number:428086)]
+fn test_withdraw_prize() {
+    let dispatcher = deploy_bet(DEFAULT_BET_PARAMS());
+    
+    let token_dispatcher = IERC20Dispatcher { contract_address: STRK_TOKEN_CONTRACT() };
+
+    fund_contract_for_gas(dispatcher.contract_address);
+
+    // transfer bet amount to the contract
+    start_cheat_caller_address_global(CALLER_1());
+    token_dispatcher.approve(CALLER_1(), 100);
+    dispatcher.receive_amount();
+    stop_cheat_caller_address_global();
+    start_cheat_caller_address_global(CALLER_2());
+    token_dispatcher.approve(CALLER_2(), 100);
+    dispatcher.receive_amount();
+    stop_cheat_caller_address_global();
+    start_cheat_caller_address_global(CALLER_3());
+    token_dispatcher.approve(CALLER_3(), 100);
+    dispatcher.receive_amount();
+    stop_cheat_caller_address_global();
+    
+    start_cheat_caller_address_global(OWNER());
+    let previous_balance = token_dispatcher.balance_of(CALLER_1());
+    dispatcher.set_winner(CALLER_1());
+    stop_cheat_caller_address_global();
+
+    start_cheat_caller_address_global(CALLER_1());
+    dispatcher.withdraw_prize();
+
+    // let new_balance = token_dispatcher.balance_of(CALLER_1());
+    // assert_eq!(new_balance - previous_balance, 300, "Balance should be 300");
 }
 
 fn fund_contract_for_gas(contract_address:ContractAddress) {
     let token_dispatcher = IERC20Dispatcher { contract_address: STRK_TOKEN_CONTRACT() };
     start_cheat_caller_address(token_dispatcher.contract_address, CALLER_2());
     // adding a bit of tokens to the contract to pay for the gas
-    token_dispatcher.transfer(contract_address, 10000);
+    token_dispatcher.transfer(contract_address, 100000);
     stop_cheat_caller_address(token_dispatcher.contract_address);
 }

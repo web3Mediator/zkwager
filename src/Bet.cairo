@@ -3,10 +3,10 @@
 #[starknet::interface]
 pub trait IBet<TContractState> {
     fn receive_amount(ref self: TContractState); // transfer from the caller address to the contract
-    fn close_bet(ref self: TContractState); // close the bet to new players/receive amount
     fn finish_bet(ref self: TContractState); // finish the bet and distribute the amount
     fn get_bet_data(self: @TContractState) -> zkwager::types::BetData; 
     fn set_winner(ref self: TContractState, winner: starknet::ContractAddress);
+    fn withdraw_prize(ref self: TContractState);
 }
 
 /// Simple contract for managing balance.
@@ -68,9 +68,6 @@ pub mod Bet {
             self.paid_players.append().write(caller_address);
         }
 
-        fn close_bet(ref self: ContractState) {
-            self.closed.write(true);
-        }
 
         fn finish_bet(ref self: ContractState) {
             assert!(self.closed.read(), "The bet should be closed before finishing it");
@@ -97,6 +94,17 @@ pub mod Bet {
         fn set_winner(ref self: ContractState, winner: ContractAddress) {
             self.winner.write(winner);
             self.finished.write(true);
+        }
+
+        fn withdraw_prize(ref self: ContractState) {
+            assert!(self.finished.read(), "The bet should be finished before withdrawing the prize");
+            assert!(self.winner.read() == get_caller_address(), "Only the winner can withdraw the prize");
+            let token_address = self.token_address.read();
+            let amount_per_player = self.amount_per_player.read();
+            let winner = self.winner.read();
+            let dispatcher = IERC20Dispatcher { contract_address:token_address };
+            let amount = self.paid_players.len().into() * amount_per_player;
+            dispatcher.transfer(winner, amount);
         }
         
     }

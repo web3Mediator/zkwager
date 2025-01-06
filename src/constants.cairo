@@ -1,7 +1,7 @@
 use starknet::{ContractAddress, contract_address_const};
 
 pub fn OWNER() -> ContractAddress {
-    contract_address_const::<0x123>()
+    contract_address_const::<0x05f76B9ADf5D18Ca000ef6e7e9B7cBef63c72749426E91C1b206b42CEDAd7E1E>()
 }
 // mock wallet addresses with tokens
 pub fn CALLER_1() -> ContractAddress {
