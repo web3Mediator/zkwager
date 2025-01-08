@@ -58,12 +58,11 @@ fn test_receive_amount() {
 
     fund_contract_for_gas(dispatcher.contract_address);
 
-    start_cheat_caller_address_global(CALLER_1());
-    token_dispatcher.approve(CALLER_1(), 100); // this approve could be premade like a balance for the game
-    // VERY IMPORTANT TO DO -> assert that the one who called receive_amount is the same as the one who approved
-    // or -> this function should of the game contract instead of the bet 
+    start_cheat_caller_address(token_dispatcher.contract_address, CALLER_1());
+    token_dispatcher.approve(dispatcher.contract_address, 100); // this approve could be premade like a balance for the game
+    stop_cheat_caller_address(token_dispatcher.contract_address);
+    start_cheat_caller_address(dispatcher.contract_address, CALLER_1());
     dispatcher.receive_amount();
-    stop_cheat_caller_address_global();
 }
 
 #[test]
@@ -107,4 +106,11 @@ fn fund_contract_for_gas(contract_address:ContractAddress) {
     // adding a bit of tokens to the contract to pay for the gas
     token_dispatcher.transfer(contract_address, 100000);
     stop_cheat_caller_address(token_dispatcher.contract_address);
+}
+
+// dispatcher, owner, spender, amount
+fn approve_amount(dispatcher:IERC20Dispatcher, owner:ContractAddress, spender:ContractAddress, amount:u256) {
+    start_cheat_caller_address(dispatcher.contract_address, owner);
+    dispatcher.approve(spender, amount);
+    stop_cheat_caller_address(dispatcher.contract_address);
 }

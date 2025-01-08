@@ -63,6 +63,8 @@ pub mod Bet {
             let contract_address = get_contract_address();
             let dispatcher = IERC20Dispatcher { contract_address:token_address };
 
+            let allowance = dispatcher.allowance(caller_address, contract_address);
+            println!("Allowance: {} for {} to pay", allowance, amount_per_player);
             dispatcher.transfer_from(caller_address, contract_address, amount_per_player);
 
             self.paid_players.append().write(caller_address);
