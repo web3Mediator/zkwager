@@ -50,59 +50,71 @@ fn test_deploy() {
     assert_eq!(bet_data.amount, DEFAULT_BET_PARAMS().amount, "Amount should be the same");
 }
 
-#[test]
-#[fork(url: "https://starknet-sepolia.public.blastapi.io/rpc/v0_7", block_number:428086)]
-fn test_receive_amount() {
-    let dispatcher = deploy_bet(DEFAULT_BET_PARAMS());
-    let token_dispatcher = IERC20Dispatcher { contract_address: STRK_TOKEN_CONTRACT() };
 
-    fund_contract_for_gas(dispatcher.contract_address);
-
-    approve_amount(token_dispatcher, CALLER_1(), dispatcher.contract_address, 100);
-
-    start_cheat_caller_address(dispatcher.contract_address, CALLER_1());
-    let previous_contract_balance = token_dispatcher.balance_of(dispatcher.contract_address);
-    let previous_caller_balance = token_dispatcher.balance_of(CALLER_1());
-    dispatcher.receive_amount();
-    let new_contract_balance = token_dispatcher.balance_of(dispatcher.contract_address);
-    let new_caller_balance = token_dispatcher.balance_of(CALLER_1());
-    stop_cheat_caller_address(dispatcher.contract_address);
-
-    assert_eq!(new_contract_balance - previous_contract_balance, 100, "Contract balance should be 100");
-    assert_eq!(previous_caller_balance - new_caller_balance, 100, "Caller balance should be 100 less");
-}
 
 #[test]
 #[fork(url: "https://starknet-sepolia.public.blastapi.io/rpc/v0_7", block_number:428086)]
-fn test_withdraw_prize() {
+fn test_collect_bet_amount() {
     let dispatcher = deploy_bet(DEFAULT_BET_PARAMS());
-    
     let token_dispatcher = IERC20Dispatcher { contract_address: STRK_TOKEN_CONTRACT() };
-
     fund_contract_for_gas(dispatcher.contract_address);
 
+    // accept the bet
     approve_amount(token_dispatcher, CALLER_1(), dispatcher.contract_address, 100);
     approve_amount(token_dispatcher, CALLER_2(), dispatcher.contract_address, 100);
     approve_amount(token_dispatcher, CALLER_3(), dispatcher.contract_address, 100);
-    
-    receive_amount(dispatcher, CALLER_1());
-    receive_amount(dispatcher, CALLER_2());
-    receive_amount(dispatcher, CALLER_3());
 
-    dispatcher.close_bet();
-    dispatcher.set_winner(CALLER_1());
-
-    start_cheat_caller_address(dispatcher.contract_address, CALLER_1());
+    // collect bet amount and close bet
+    start_cheat_caller_address(dispatcher.contract_address, CALLER_1()); // should be called from game contract or something like that, not for a player OR for simplicity, that the one who creates the bet starts it, this make sense to me
     let previous_contract_balance = token_dispatcher.balance_of(dispatcher.contract_address);
-    let previous_caller_balance = token_dispatcher.balance_of(CALLER_1());
-    dispatcher.withdraw_prize();
+    let previous_caller_1_balance = token_dispatcher.balance_of(CALLER_1());
+    let previous_caller_2_balance = token_dispatcher.balance_of(CALLER_2());
+    let previous_caller_3_balance = token_dispatcher.balance_of(CALLER_3());
+    dispatcher.collect_bet_amount();
     let new_contract_balance = token_dispatcher.balance_of(dispatcher.contract_address);
-    let new_caller_balance = token_dispatcher.balance_of(CALLER_1());
+    let new_caller_1_balance = token_dispatcher.balance_of(CALLER_1());
+    let new_caller_2_balance = token_dispatcher.balance_of(CALLER_2());
+    let new_caller_3_balance = token_dispatcher.balance_of(CALLER_3());
     stop_cheat_caller_address(dispatcher.contract_address);
-    
-    assert_eq!(previous_contract_balance - new_contract_balance, 300, "Contract balance should be 300 less");
-    assert_eq!(new_caller_balance - previous_caller_balance, 300, "Caller balance should be 300 more");
+
+    assert_eq!(new_contract_balance - previous_contract_balance, 300, "Contract balance should be 300"); // 3 players * 100 each one = 300
+    assert_eq!(previous_caller_1_balance - new_caller_1_balance, 100, "Caller 1 balance should be 100 less");
+    assert_eq!(previous_caller_2_balance - new_caller_2_balance, 100, "Caller 2 balance should be 100 less");
+    assert_eq!(previous_caller_3_balance - new_caller_3_balance, 100, "Caller 3 balance should be 100 less");
 }
+
+
+// #[test]
+// #[fork(url: "https://starknet-sepolia.public.blastapi.io/rpc/v0_7", block_number:428086)]
+// fn test_withdraw_prize() {
+//     let dispatcher = deploy_bet(DEFAULT_BET_PARAMS());
+    
+//     let token_dispatcher = IERC20Dispatcher { contract_address: STRK_TOKEN_CONTRACT() };
+
+//     fund_contract_for_gas(dispatcher.contract_address);
+
+//     approve_amount(token_dispatcher, CALLER_1(), dispatcher.contract_address, 100);
+//     approve_amount(token_dispatcher, CALLER_2(), dispatcher.contract_address, 100);
+//     approve_amount(token_dispatcher, CALLER_3(), dispatcher.contract_address, 100);
+    
+//     receive_amount(dispatcher, CALLER_1());
+//     receive_amount(dispatcher, CALLER_2());
+//     receive_amount(dispatcher, CALLER_3());
+
+//     dispatcher.close_bet();
+//     dispatcher.set_winner(CALLER_1());
+
+//     start_cheat_caller_address(dispatcher.contract_address, CALLER_1());
+//     let previous_contract_balance = token_dispatcher.balance_of(dispatcher.contract_address);
+//     let previous_caller_balance = token_dispatcher.balance_of(CALLER_1());
+//     dispatcher.withdraw_prize();
+//     let new_contract_balance = token_dispatcher.balance_of(dispatcher.contract_address);
+//     let new_caller_balance = token_dispatcher.balance_of(CALLER_1());
+//     stop_cheat_caller_address(dispatcher.contract_address);
+    
+//     assert_eq!(previous_contract_balance - new_contract_balance, 300, "Contract balance should be 300 less");
+//     assert_eq!(new_caller_balance - previous_caller_balance, 300, "Caller balance should be 300 more");
+// }
 
 fn fund_contract_for_gas(contract_address:ContractAddress) {
     let token_dispatcher = IERC20Dispatcher { contract_address: STRK_TOKEN_CONTRACT() };
@@ -119,8 +131,9 @@ fn approve_amount(dispatcher:IERC20Dispatcher, owner:ContractAddress, spender:Co
     stop_cheat_caller_address(dispatcher.contract_address);
 }
 
-fn receive_amount(dispatcher:IBetDispatcher, caller:ContractAddress) {
-    start_cheat_caller_address(dispatcher.contract_address, caller);
-    dispatcher.receive_amount();
-    stop_cheat_caller_address(dispatcher.contract_address);
-}
+// should be collect amount now
+// fn receive_amount(dispatcher:IBetDispatcher, caller:ContractAddress) {
+//     start_cheat_caller_address(dispatcher.contract_address, caller);
+//     dispatcher.receive_amount();
+//     stop_cheat_caller_address(dispatcher.contract_address);
+// }

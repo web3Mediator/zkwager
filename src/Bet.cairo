@@ -2,8 +2,7 @@
 /// This interface allows modification and retrieval of the contract balance.
 #[starknet::interface]
 pub trait IBet<TContractState> {
-    fn receive_amount(ref self: TContractState); // transfer from the caller address to the contract
-    fn close_bet(ref self: TContractState);
+    fn collect_bet_amount(ref self: TContractState); // transfer from the caller address to the contract
     fn get_bet_data(self: @TContractState) -> zkwager::types::BetData; 
     fn set_winner(ref self: TContractState, winner: starknet::ContractAddress);
     fn withdraw_prize(ref self: TContractState);
@@ -54,26 +53,27 @@ pub mod Bet {
 
     #[abi(embed_v0)]
     impl BetImpl of super::IBet<ContractState> {
-        fn receive_amount(ref self: ContractState) {
+        fn collect_bet_amount(ref self: ContractState) {
             assert!(!self.closed.read(), "The bet should be open to receive amounts");
             // transfer from the caller address to the contract
             let token_address = self.token_address.read();
             let amount_per_player = self.amount_per_player.read();
-            let caller_address = get_caller_address();
+
+            let token = IERC20Dispatcher { contract_address:token_address };
             let contract_address = get_contract_address();
-            let dispatcher = IERC20Dispatcher { contract_address:token_address };
+            
+            for index in 0..self.players.len() {
+                let player = self.players.at(index).read();
+                let allowance = token.allowance(player, contract_address);
+                if allowance >= amount_per_player {
+                    token.transfer_from(player, contract_address, amount_per_player);
+                    self.paid_players.append().write(player);
+                }
+            };
 
-            let allowance = dispatcher.allowance(caller_address, contract_address);
-            dispatcher.transfer_from(caller_address, contract_address, amount_per_player);
-
-            self.paid_players.append().write(caller_address);
-        }
-
-
-        fn close_bet(ref self: ContractState) {
-            // this should be called just for game contract
             self.closed.write(true);
         }
+
 
         fn get_bet_data(self: @ContractState) -> BetData {
             let mut players = ArrayTrait::<ContractAddress>::new();            
