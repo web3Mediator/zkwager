@@ -84,37 +84,37 @@ fn test_collect_bet_amount() {
 }
 
 
-// #[test]
-// #[fork(url: "https://starknet-sepolia.public.blastapi.io/rpc/v0_7", block_number:428086)]
-// fn test_withdraw_prize() {
-//     let dispatcher = deploy_bet(DEFAULT_BET_PARAMS());
+#[test]
+#[fork(url: "https://starknet-sepolia.public.blastapi.io/rpc/v0_7", block_number:428086)]
+fn test_withdraw_prize() {
+    let dispatcher = deploy_bet(DEFAULT_BET_PARAMS());
     
-//     let token_dispatcher = IERC20Dispatcher { contract_address: STRK_TOKEN_CONTRACT() };
+    let token_dispatcher = IERC20Dispatcher { contract_address: STRK_TOKEN_CONTRACT() };
 
-//     fund_contract_for_gas(dispatcher.contract_address);
+    fund_contract_for_gas(dispatcher.contract_address);
 
-//     approve_amount(token_dispatcher, CALLER_1(), dispatcher.contract_address, 100);
-//     approve_amount(token_dispatcher, CALLER_2(), dispatcher.contract_address, 100);
-//     approve_amount(token_dispatcher, CALLER_3(), dispatcher.contract_address, 100);
+    approve_amount(token_dispatcher, CALLER_1(), dispatcher.contract_address, 100);
+    approve_amount(token_dispatcher, CALLER_2(), dispatcher.contract_address, 100);
+    approve_amount(token_dispatcher, CALLER_3(), dispatcher.contract_address, 100);
     
-//     receive_amount(dispatcher, CALLER_1());
-//     receive_amount(dispatcher, CALLER_2());
-//     receive_amount(dispatcher, CALLER_3());
+    dispatcher.collect_bet_amount();
 
-//     dispatcher.close_bet();
-//     dispatcher.set_winner(CALLER_1());
+    start_cheat_caller_address(dispatcher.contract_address, CALLER_1());
+    // in this case we are calling it from the winner account (like win the game and trigger the call, but, maybe should be call from a kind of game address?) maybe ERC-6551
+    dispatcher.set_winner(CALLER_1());
+    stop_cheat_caller_address(dispatcher.contract_address);
 
-//     start_cheat_caller_address(dispatcher.contract_address, CALLER_1());
-//     let previous_contract_balance = token_dispatcher.balance_of(dispatcher.contract_address);
-//     let previous_caller_balance = token_dispatcher.balance_of(CALLER_1());
-//     dispatcher.withdraw_prize();
-//     let new_contract_balance = token_dispatcher.balance_of(dispatcher.contract_address);
-//     let new_caller_balance = token_dispatcher.balance_of(CALLER_1());
-//     stop_cheat_caller_address(dispatcher.contract_address);
+    start_cheat_caller_address(dispatcher.contract_address, CALLER_1());
+    let previous_contract_balance = token_dispatcher.balance_of(dispatcher.contract_address);
+    let previous_caller_balance = token_dispatcher.balance_of(CALLER_1());
+    dispatcher.withdraw_prize();
+    let new_contract_balance = token_dispatcher.balance_of(dispatcher.contract_address);
+    let new_caller_balance = token_dispatcher.balance_of(CALLER_1());
+    stop_cheat_caller_address(dispatcher.contract_address);
     
-//     assert_eq!(previous_contract_balance - new_contract_balance, 300, "Contract balance should be 300 less");
-//     assert_eq!(new_caller_balance - previous_caller_balance, 300, "Caller balance should be 300 more");
-// }
+    assert_eq!(previous_contract_balance - new_contract_balance, 300, "Contract balance should be 300 less");
+    assert_eq!(new_caller_balance - previous_caller_balance, 300, "Caller balance should be 300 more");
+}
 
 fn fund_contract_for_gas(contract_address:ContractAddress) {
     let token_dispatcher = IERC20Dispatcher { contract_address: STRK_TOKEN_CONTRACT() };
@@ -131,9 +131,5 @@ fn approve_amount(dispatcher:IERC20Dispatcher, owner:ContractAddress, spender:Co
     stop_cheat_caller_address(dispatcher.contract_address);
 }
 
-// should be collect amount now
-// fn receive_amount(dispatcher:IBetDispatcher, caller:ContractAddress) {
-//     start_cheat_caller_address(dispatcher.contract_address, caller);
-//     dispatcher.receive_amount();
-//     stop_cheat_caller_address(dispatcher.contract_address);
-// }
+// Pending tests 
+// - Test that some players not allow, they should be excluded from the bet 
