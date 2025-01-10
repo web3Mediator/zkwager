@@ -3,7 +3,7 @@
 #[starknet::interface]
 pub trait IBet<TContractState> {
     fn receive_amount(ref self: TContractState); // transfer from the caller address to the contract
-    fn finish_bet(ref self: TContractState); // finish the bet and distribute the amount
+    fn close_bet(ref self: TContractState);
     fn get_bet_data(self: @TContractState) -> zkwager::types::BetData; 
     fn set_winner(ref self: TContractState, winner: starknet::ContractAddress);
     fn withdraw_prize(ref self: TContractState);
@@ -64,16 +64,15 @@ pub mod Bet {
             let dispatcher = IERC20Dispatcher { contract_address:token_address };
 
             let allowance = dispatcher.allowance(caller_address, contract_address);
-            println!("Allowance: {} for {} to pay", allowance, amount_per_player);
             dispatcher.transfer_from(caller_address, contract_address, amount_per_player);
 
             self.paid_players.append().write(caller_address);
         }
 
 
-        fn finish_bet(ref self: ContractState) {
-            assert!(self.closed.read(), "The bet should be closed before finishing it");
-            self.finished.write(true);
+        fn close_bet(ref self: ContractState) {
+            // this should be called just for game contract
+            self.closed.write(true);
         }
 
         fn get_bet_data(self: @ContractState) -> BetData {
@@ -101,6 +100,7 @@ pub mod Bet {
         fn withdraw_prize(ref self: ContractState) {
             assert!(self.finished.read(), "The bet should be finished before withdrawing the prize");
             assert!(self.winner.read() == get_caller_address(), "Only the winner can withdraw the prize");
+            // ??? transfer to 0??
             let token_address = self.token_address.read();
             let amount_per_player = self.amount_per_player.read();
             let winner = self.winner.read();

@@ -58,11 +58,18 @@ fn test_receive_amount() {
 
     fund_contract_for_gas(dispatcher.contract_address);
 
-    start_cheat_caller_address(token_dispatcher.contract_address, CALLER_1());
-    token_dispatcher.approve(dispatcher.contract_address, 100); // this approve could be premade like a balance for the game
-    stop_cheat_caller_address(token_dispatcher.contract_address);
+    approve_amount(token_dispatcher, CALLER_1(), dispatcher.contract_address, 100);
+
     start_cheat_caller_address(dispatcher.contract_address, CALLER_1());
+    let previous_contract_balance = token_dispatcher.balance_of(dispatcher.contract_address);
+    let previous_caller_balance = token_dispatcher.balance_of(CALLER_1());
     dispatcher.receive_amount();
+    let new_contract_balance = token_dispatcher.balance_of(dispatcher.contract_address);
+    let new_caller_balance = token_dispatcher.balance_of(CALLER_1());
+    stop_cheat_caller_address(dispatcher.contract_address);
+
+    assert_eq!(new_contract_balance - previous_contract_balance, 100, "Contract balance should be 100");
+    assert_eq!(previous_caller_balance - new_caller_balance, 100, "Caller balance should be 100 less");
 }
 
 #[test]
@@ -74,30 +81,27 @@ fn test_withdraw_prize() {
 
     fund_contract_for_gas(dispatcher.contract_address);
 
-    // transfer bet amount to the contract
-    start_cheat_caller_address_global(CALLER_1());
-    token_dispatcher.approve(CALLER_1(), 100);
-    dispatcher.receive_amount();
-    stop_cheat_caller_address_global();
-    start_cheat_caller_address_global(CALLER_2());
-    token_dispatcher.approve(CALLER_2(), 100);
-    dispatcher.receive_amount();
-    stop_cheat_caller_address_global();
-    start_cheat_caller_address_global(CALLER_3());
-    token_dispatcher.approve(CALLER_3(), 100);
-    dispatcher.receive_amount();
-    stop_cheat_caller_address_global();
+    approve_amount(token_dispatcher, CALLER_1(), dispatcher.contract_address, 100);
+    approve_amount(token_dispatcher, CALLER_2(), dispatcher.contract_address, 100);
+    approve_amount(token_dispatcher, CALLER_3(), dispatcher.contract_address, 100);
     
-    start_cheat_caller_address_global(OWNER());
-    let previous_balance = token_dispatcher.balance_of(CALLER_1());
+    receive_amount(dispatcher, CALLER_1());
+    receive_amount(dispatcher, CALLER_2());
+    receive_amount(dispatcher, CALLER_3());
+
+    dispatcher.close_bet();
     dispatcher.set_winner(CALLER_1());
-    stop_cheat_caller_address_global();
 
-    start_cheat_caller_address_global(CALLER_1());
+    start_cheat_caller_address(dispatcher.contract_address, CALLER_1());
+    let previous_contract_balance = token_dispatcher.balance_of(dispatcher.contract_address);
+    let previous_caller_balance = token_dispatcher.balance_of(CALLER_1());
     dispatcher.withdraw_prize();
-
-    // let new_balance = token_dispatcher.balance_of(CALLER_1());
-    // assert_eq!(new_balance - previous_balance, 300, "Balance should be 300");
+    let new_contract_balance = token_dispatcher.balance_of(dispatcher.contract_address);
+    let new_caller_balance = token_dispatcher.balance_of(CALLER_1());
+    stop_cheat_caller_address(dispatcher.contract_address);
+    
+    assert_eq!(previous_contract_balance - new_contract_balance, 300, "Contract balance should be 300 less");
+    assert_eq!(new_caller_balance - previous_caller_balance, 300, "Caller balance should be 300 more");
 }
 
 fn fund_contract_for_gas(contract_address:ContractAddress) {
@@ -112,5 +116,11 @@ fn fund_contract_for_gas(contract_address:ContractAddress) {
 fn approve_amount(dispatcher:IERC20Dispatcher, owner:ContractAddress, spender:ContractAddress, amount:u256) {
     start_cheat_caller_address(dispatcher.contract_address, owner);
     dispatcher.approve(spender, amount);
+    stop_cheat_caller_address(dispatcher.contract_address);
+}
+
+fn receive_amount(dispatcher:IBetDispatcher, caller:ContractAddress) {
+    start_cheat_caller_address(dispatcher.contract_address, caller);
+    dispatcher.receive_amount();
     stop_cheat_caller_address(dispatcher.contract_address);
 }
