@@ -17,7 +17,7 @@ pub trait IGame<TContractState> {
 /// Simple contract for managing balance.
 #[starknet::contract]
 pub mod Game {
-    use starknet::{ContractAddress, get_caller_address, contract_address_const, syscalls, SyscallResultTrait};
+    use starknet::{ContractAddress, syscalls, SyscallResultTrait};
     use starknet::class_hash::ClassHash;
     use starknet::storage::{
         StoragePointerReadAccess, StoragePointerWriteAccess,

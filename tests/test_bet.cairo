@@ -1,16 +1,12 @@
-use starknet::{ContractAddress, get_caller_address, contract_address_const};
+use starknet::{ContractAddress};
 // use starknet::class_hash::{ClassHash, };
 
-use snforge_std::{declare, ContractClassTrait, DeclareResultTrait, start_cheat_caller_address, stop_cheat_caller_address, start_cheat_caller_address_global, stop_cheat_caller_address_global};
+use snforge_std::{declare, ContractClassTrait, DeclareResultTrait, start_cheat_caller_address, stop_cheat_caller_address};
 
-use zkwager::GameRegister::IGameRegisterDispatcher;
-use zkwager::GameRegister::IGameRegisterDispatcherTrait;
-use zkwager::Game::IGameDispatcher;
-use zkwager::Game::IGameDispatcherTrait;
 use zkwager::Bet::IBetDispatcher;
 use zkwager::Bet::IBetDispatcherTrait;
 
-use zkwager::constants::{CALLER_1, CALLER_2, CALLER_3, STRK_TOKEN_CONTRACT, OWNER};
+use zkwager::constants::{CALLER_1, CALLER_2, CALLER_3, STRK_TOKEN_CONTRACT};
 use zkwager::types::{BetData};
 
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};

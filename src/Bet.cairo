@@ -11,11 +11,9 @@ pub trait IBet<TContractState> {
 /// Simple contract for managing balance.
 #[starknet::contract]
 pub mod Bet {
-    use starknet::{ContractAddress, get_caller_address, get_contract_address, contract_address_const, syscalls, SyscallResultTrait};
-    use starknet::class_hash::ClassHash;
+    use starknet::{ContractAddress, get_caller_address, get_contract_address};
     use starknet::storage::{
         StoragePointerReadAccess, StoragePointerWriteAccess,
-        StoragePathEntry, Map,
         Vec, VecTrait, MutableVecTrait,
     };
     use zkwager::types::{BetData};
@@ -83,8 +81,6 @@ pub mod Bet {
             };
             let amount_per_player = self.amount_per_player.read();
             let token_address = self.token_address.read();
-            let closed = self.closed.read();
-            let finished = self.finished.read();
             BetData {
                 players: players,
                 token_contract: token_address,
