@@ -1,5 +1,5 @@
-/// Interface representing `HelloContract`.
-/// This interface allows modification and retrieval of the contract balance.
+// TO DOs
+// 1. Add an storage key "BetManager" or similar. This is the one who creates the bet and decides when to close it  
 #[starknet::interface]
 pub trait IBet<TContractState> {
     fn collect_bet_amount(ref self: TContractState); // transfer from the caller address to the contract
